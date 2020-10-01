@@ -7,7 +7,6 @@ import {pipe} from 'fp-ts/es6/pipeable'
 import {Container} from './container'
 import {createElement} from './element'
 import {DetailedError, err} from './error'
-import {Fluture, timeout} from './future'
 import {noop} from './noop'
 
 const serializeSVGToDataURL = ($svg: SVGSVGElement): string =>
@@ -118,32 +117,6 @@ export const containerToCanvas = (
 		})
 	)
 }
-
-const dataURLToBlob = (
-	dataURL: string
-): Fluture<DetailedError, Blob> =>
-	Future((rej, res) => {
-		fetch(dataURL)
-			.then(x => x.blob())
-			.then(res)
-			.catch(() =>
-				rej(
-					err(
-						`Failed to convert dataURL to blob (${dataURL})`
-					)
-				)
-			)
-
-		return noop
-	})
-
-export const containerToSVGBlob = (
-	container: Container
-): Fluture<DetailedError, Blob> =>
-	pipe(
-		serializeSVGToDataURL(container.tree.svg),
-		dataURLToBlob
-	)
 
 export const containerToPngBlob = (
 	container: Container

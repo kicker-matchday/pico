@@ -20,7 +20,7 @@ import {
 	downloadErrorToDetailedError,
 	responseToBlob,
 	responseToText
-} from './download'
+} from './utils'
 import {DetailedError} from './error'
 import {
 	ErrorStack,

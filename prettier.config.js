@@ -3,7 +3,7 @@ module.exports = {
 	printWidth: 65,
 	useTabs: true,
 	tabWidth: 4,
-	semi: false,
+	semi: true,
 	singleQuote: true,
-	bracketSpacing: false
+	bracketSpacing: true
 }

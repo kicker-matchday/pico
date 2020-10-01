@@ -2,21 +2,22 @@
 // unique id's so that their state can be later copied into
 // a clone
 
-import {zip} from 'fp-ts/es6/Array'
+import { zip } from 'fp-ts/es6/Array';
 
-import {Container} from './container'
+import { Container } from './container';
 
-const PICO_CLONE_ID_KEY = 'picocloneid'
+const PICO_CLONE_ID_KEY = 'picocloneid';
 
-const id = () =>
-	Math.random()
+const id = () => {
+	return Math.random()
 		.toString(32)
-		.substring(2)
+		.substring(2);
+};
 
 function isHTMLElement(
 	element: Element
 ): element is HTMLElement {
-	return element instanceof HTMLElement
+	return element instanceof HTMLElement;
 }
 
 function isHTMLOrSVGElement(
@@ -25,22 +26,24 @@ function isHTMLOrSVGElement(
 	return (
 		element instanceof HTMLElement ||
 		element instanceof SVGElement
-	)
+	);
 }
 
-const defaultNaN = (defaultTo: number) => (value: number) =>
-	isNaN(value) ? defaultTo : value
+const defaultNaN = (defaultTo: number) => (value: number) => {
+	return isNaN(value) ? defaultTo : value;
+};
 
 // Even though this function uses `querySelectorAll('*')` it's relatively
 // fast - on a page with 25k nodes (youtube) it executes in 10-15ms
 const getScrolledElements = (
 	$target: HTMLElement
-): HTMLElement[] =>
-	Array.from($target.querySelectorAll('*'))
+): HTMLElement[] => {
+	return Array.from($target.querySelectorAll('*'))
 		.filter(
 			$el => $el.scrollTop !== 0 || $el.scrollLeft !== 0
 		)
-		.filter(isHTMLElement)
+		.filter(isHTMLElement);
+};
 
 const attachCloneID = ($target: HTMLElement) => {
 	for (const $element of [
@@ -49,9 +52,9 @@ const attachCloneID = ($target: HTMLElement) => {
 		...$target.querySelectorAll('canvas'),
 		...getScrolledElements($target)
 	]) {
-		$element.dataset[PICO_CLONE_ID_KEY] = id()
+		$element.dataset[PICO_CLONE_ID_KEY] = id();
 	}
-}
+};
 
 const removeCloneID = ($target: HTMLElement) => {
 	for (const $element of $target.querySelectorAll(
@@ -61,27 +64,27 @@ const removeCloneID = ($target: HTMLElement) => {
 			console.warn(
 				'Element that had a pico clone id attached was not an HTMLElement during cleanup',
 				$element
-			)
+			);
 
-			continue
+			continue;
 		}
 
-		$element.removeAttribute(`data-${PICO_CLONE_ID_KEY}`)
+		$element.removeAttribute(`data-${PICO_CLONE_ID_KEY}`);
 	}
-}
+};
 
 const cloneCanvases = (container: Container) => {
 	for (const $clonedCanvas of container.tree.html.querySelectorAll(
 		'canvas'
 	)) {
-		const cloneId = $clonedCanvas.dataset[PICO_CLONE_ID_KEY]
+		const cloneId = $clonedCanvas.dataset[PICO_CLONE_ID_KEY];
 		if (cloneId === undefined) {
 			console.warn(
 				'Failed to get clone id from cloned canvas',
 				$clonedCanvas
-			)
+			);
 
-			continue
+			continue;
 		}
 
 		const $originalCanvas = Array.from(
@@ -91,20 +94,20 @@ const cloneCanvases = (container: Container) => {
 		).find(
 			$original =>
 				$original.dataset[PICO_CLONE_ID_KEY] === cloneId
-		)
+		);
 
 		if ($originalCanvas === undefined) {
 			console.warn(
 				'Failed to find original canvas for cloned canvas',
 				$clonedCanvas
-			)
+			);
 
-			continue
+			continue;
 		}
 
 		const $replacementImg = container.parentWindow.document.createElement(
 			'img'
-		)
+		);
 
 		// Since we're changing the element's name the "canvas"
 		// will be untargetable by css, therefore we need to
@@ -112,26 +115,26 @@ const cloneCanvases = (container: Container) => {
 		// particular case.
 		$replacementImg.style.cssText = container.parentWindow.window.getComputedStyle(
 			$originalCanvas
-		).cssText
+		).cssText;
 
-		$replacementImg.src = $originalCanvas.toDataURL()
+		$replacementImg.src = $originalCanvas.toDataURL();
 
-		const parent = $clonedCanvas.parentNode
+		const parent = $clonedCanvas.parentNode;
 
 		if (!parent) {
 			console.warn(
 				'Failed to get parent of node',
 				$clonedCanvas
-			)
+			);
 
-			continue
+			continue;
 		}
 
-		parent.replaceChild($replacementImg, $clonedCanvas)
+		parent.replaceChild($replacementImg, $clonedCanvas);
 	}
 
-	return container
-}
+	return container;
+};
 
 // Input values set by JS don't get copied when performing a recursive
 // `Node.cloneNode`, we need to set the attributes ourselves.
@@ -141,15 +144,15 @@ const cloneInputs = (container: Container) => {
 		...container.tree.html.querySelectorAll('textarea')
 	]) {
 		const cloneId =
-			$clonedInputOrTextarea.dataset[PICO_CLONE_ID_KEY]
+			$clonedInputOrTextarea.dataset[PICO_CLONE_ID_KEY];
 
 		if (cloneId === undefined) {
 			console.warn(
 				'Failed to get clone id from cloned input or textarea',
 				$clonedInputOrTextarea
-			)
+			);
 
-			continue
+			continue;
 		}
 
 		const $originalInputOrTextarea = [
@@ -162,15 +165,15 @@ const cloneInputs = (container: Container) => {
 		].find(
 			$original =>
 				$original.dataset[PICO_CLONE_ID_KEY] === cloneId
-		)
+		);
 
 		if ($originalInputOrTextarea === undefined) {
 			console.warn(
 				'Failed to find original input or textarea for cloned input or textarea',
 				$clonedInputOrTextarea
-			)
+			);
 
-			continue
+			continue;
 		}
 
 		if (
@@ -187,7 +190,7 @@ const cloneInputs = (container: Container) => {
 				$clonedInputOrTextarea.setAttribute(
 					'checked',
 					'checked'
-				)
+				);
 			} else if (
 				// <input type="number | text | range" />
 				['number', 'text', 'range'].indexOf(
@@ -197,7 +200,7 @@ const cloneInputs = (container: Container) => {
 				$clonedInputOrTextarea.setAttribute(
 					'value',
 					$originalInputOrTextarea.value
-				)
+				);
 			}
 		} else if (
 			$originalInputOrTextarea instanceof
@@ -207,80 +210,80 @@ const cloneInputs = (container: Container) => {
 			// <textarea>
 			const contents = container.parentWindow.document.createTextNode(
 				$originalInputOrTextarea.value
-			)
+			);
 
-			$clonedInputOrTextarea.innerHTML = ''
-			$clonedInputOrTextarea.appendChild(contents)
+			$clonedInputOrTextarea.innerHTML = '';
+			$clonedInputOrTextarea.appendChild(contents);
 		}
 	}
 
-	return container
-}
+	return container;
+};
 
 const cloneElementScroll = (
 	container: Container,
 	$clone: HTMLElement
 ) => {
-	const cloneId = $clone.dataset[PICO_CLONE_ID_KEY]
+	const cloneId = $clone.dataset[PICO_CLONE_ID_KEY];
 
 	if (cloneId === undefined) {
 		console.warn(
 			'Failed to get clone id from cloned scrolled element',
 			$clone
-		)
+		);
 
-		return
+		return;
 	}
 
 	const $original = container.parentWindow.document.querySelector(
 		`[data-${PICO_CLONE_ID_KEY} = "${cloneId}"]`
-	)
+	);
 
 	if (!($original instanceof HTMLElement)) {
 		console.warn(
 			'Failed to find original element for scrolled element',
 			$clone
-		)
+		);
 
-		return
+		return;
 	}
 
 	$clone.style.position =
 		$clone.style.position === 'absolute'
 			? 'absolute'
-			: 'relative'
+			: 'relative';
 
-	$clone.style.overflow = 'hidden'
-	$clone.style.width = $original.offsetWidth + 'px'
-	$clone.style.height = $original.offsetHeight + 'px'
+	$clone.style.overflow = 'hidden';
+	$clone.style.width = $original.offsetWidth + 'px';
+	$clone.style.height = $original.offsetHeight + 'px';
 
 	const $clonedChildren = Array.from($clone.children).filter(
 		isHTMLOrSVGElement
-	)
+	);
 
 	const $originalChildren = Array.from(
 		$original.children
-	).filter(isHTMLOrSVGElement)
+	).filter(isHTMLOrSVGElement);
 
 	if ($clonedChildren.length !== $originalChildren.length) {
 		console.warn(
 			'Scrolled element has a different amount of children ' +
 				'than its clone, skipping scroll emulation',
 			$original
-		)
+		);
 
-		return
+		return;
 	}
 
 	const $$zippedChildren = zip(
 		$originalChildren,
 		$clonedChildren
-	)
+	);
 
-	let scrollTopRemaining = $original.scrollTop
-	let scrollLeftRemaining = $original.scrollLeft
+	let scrollTopRemaining = $original.scrollTop;
+	let scrollLeftRemaining = $original.scrollLeft;
 
-	let lastChild
+	let lastChild;
 
 	for (const [
 		$originalChild,
@@ -288,7 +291,7 @@ const cloneElementScroll = (
 	] of $$zippedChildren) {
 		const originalChildStyles = container.parentWindow.window.getComputedStyle(
 			$originalChild
-		)
+		);
 
 		// Handle absolutely positioned children
 		if (
@@ -302,14 +305,14 @@ const cloneElementScroll = (
 					parseInt(originalChildStyles.top)
 				) -
 				$original.scrollTop +
-				'px'
+				'px';
 
 			$clonedChild.style.left =
 				defaultNaN(0)(
 					parseInt(originalChildStyles.left)
 				) -
 				$original.scrollLeft +
-				'px'
+				'px';
 
 			// Since all relative children are now absolute, increment z-index
 			// of all previously absolute children by 1 so that they're
@@ -318,73 +321,73 @@ const cloneElementScroll = (
 				defaultNaN(0)(
 					parseInt(originalChildStyles.zIndex)
 				) + 1
-			).toString()
+			).toString();
 
-			continue
+			continue;
 		}
 
-		$clonedChild.style.position = 'absolute'
+		$clonedChild.style.position = 'absolute';
 
-		$clonedChild.style.width = originalChildStyles.width
-		$clonedChild.style.height = originalChildStyles.height
+		$clonedChild.style.width = originalChildStyles.width;
+		$clonedChild.style.height = originalChildStyles.height;
 
 		if (typeof lastChild !== 'undefined') {
-			const lastChildBoundingRect = lastChild.getBoundingClientRect()
+			const lastChildBoundingRect = lastChild.getBoundingClientRect();
 			scrollTopRemaining -=
 				$originalChild.getBoundingClientRect().top -
-				lastChildBoundingRect.top
+				lastChildBoundingRect.top;
 
 			scrollLeftRemaining -=
 				$originalChild.getBoundingClientRect().left -
-				lastChildBoundingRect.left
+				lastChildBoundingRect.left;
 		}
 
-		$clonedChild.style.top = -scrollTopRemaining + 'px'
-		$clonedChild.style.left = -scrollLeftRemaining + 'px'
+		$clonedChild.style.top = -scrollTopRemaining + 'px';
+		$clonedChild.style.left = -scrollLeftRemaining + 'px';
 
-		lastChild = $originalChild
+		lastChild = $originalChild;
 
 		// const cloneChildBoundingRect = $originalChild.getBoundingClientRect()
 	}
-}
+};
 
 const cloneScrolls = (container: Container) => {
 	for (const $original of getScrolledElements(
 		container.parentWindow.html
 	)) {
-		const cloneId = $original.dataset[PICO_CLONE_ID_KEY]
+		const cloneId = $original.dataset[PICO_CLONE_ID_KEY];
 
 		if (cloneId === undefined) {
 			console.warn(
 				'Failed to get clone id from scrolled element',
 				$original
-			)
+			);
 
-			continue
+			continue;
 		}
 
 		const $cloned = container.tree.html.querySelector(
 			`[data-${PICO_CLONE_ID_KEY} = "${cloneId}"]`
-		)
+		);
 
 		if (!($cloned instanceof HTMLElement)) {
 			console.warn(
 				'Failed to find cloned element for original scrolled element',
 				$original
-			)
+			);
 
-			continue
+			continue;
 		}
 
-		cloneElementScroll(container, $cloned)
+		cloneElementScroll(container, $cloned);
 	}
 
 	// The above code doesn't process <html> scroll since it usually gets
 	// special treatment in browsers, a simple `translate` will do
-	container.tree.html.style.transform += ` translate(-${container.parentWindow.html.scrollLeft}px, -${container.parentWindow.html.scrollTop}px)`
+	container.tree.html.style.transform += ` translate(-${container.parentWindow.html.scrollLeft}px, -${container.parentWindow.html.scrollTop}px)`;
 
-	return container
-}
+	return container;
+};
 
 const removeNodesMatchingSelectors = (selectors: string[]) => (
 	$node: Node
@@ -394,45 +397,45 @@ const removeNodesMatchingSelectors = (selectors: string[]) => (
 			for (const $child of $node.querySelectorAll(
 				selector
 			)) {
-				$child.remove()
+				$child.remove();
 			}
-		})
+		});
 	}
-}
+};
 
 // (ugly)
 export const cloneBody = (ignoredSelectors: string[]) => (
 	container: Container
 ): Container => {
-	attachCloneID(container.parentWindow.html)
+	attachCloneID(container.parentWindow.html);
 
 	container.tree.html.className =
-		container.parentWindow.html.className
+		container.parentWindow.html.className;
 
 	container.tree.html.style.cssText =
-		container.parentWindow.html.style.cssText
+		container.parentWindow.html.style.cssText;
 
 	// Fix for `rem` units
 	container.tree.svg.style.fontSize = container.parentWindow.window.getComputedStyle(
 		container.parentWindow.html
-	).fontSize
+	).fontSize;
 
 	const $clonedBody = container.parentWindow.body.cloneNode(
 		true
-	)
+	);
 
-	removeNodesMatchingSelectors(ignoredSelectors)($clonedBody)
+	removeNodesMatchingSelectors(ignoredSelectors)($clonedBody);
 
-	container.tree.html.appendChild($clonedBody)
-	cloneInputs(container)
-	cloneCanvases(container)
-	cloneScrolls(container)
+	container.tree.html.appendChild($clonedBody);
+	cloneInputs(container);
+	cloneCanvases(container);
+	cloneScrolls(container);
 
 	if ($clonedBody instanceof HTMLBodyElement) {
-		container.tree.html.style.margin = '0'
+		container.tree.html.style.margin = '0';
 	}
 
-	removeCloneID(container.parentWindow.html)
+	removeCloneID(container.parentWindow.html);
 
-	return container
-}
+	return container;
+};
