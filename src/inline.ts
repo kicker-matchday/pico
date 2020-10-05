@@ -7,21 +7,14 @@ import {
 	parallel,
 	reject,
 	resolve
-} from 'fluture'
-import {filter, flatten, map} from 'fp-ts/es6/Array'
-import {Either, left, right} from 'fp-ts/es6/Either'
-import {identity} from 'fp-ts/es6/function'
-import {pipe} from 'fp-ts/es6/pipeable'
+} from 'fluture';
+import { filter, flatten, map } from 'fp-ts/es6/Array';
+import { Either, left, right } from 'fp-ts/es6/Either';
+import { identity } from 'fp-ts/es6/function';
+import { pipe } from 'fp-ts/es6/pipeable';
 
-import {Container} from './container'
-import {
-	blobToDataURL,
-	download,
-	downloadErrorToDetailedError,
-	responseToBlob,
-	responseToText
-} from './utils'
-import {DetailedError} from './error'
+import { Container } from './container';
+import { DetailedError } from './error';
 import {
 	ErrorStack,
 	empty as emptyErrorStack,
@@ -31,15 +24,22 @@ import {
 	fromErrors as errorStackFromErrors,
 	value as errorStackValue,
 	fold as foldErrorStacks
-} from './error-stack'
-import {Fluture} from './future'
+} from './error-stack';
+import { Fluture } from './future';
+import {
+	blobToDataURL,
+	download,
+	downloadErrorToDetailedError,
+	responseToBlob,
+	responseToText
+} from './utils';
 
-const parallelAll = parallel(Infinity)
+const parallelAll = parallel(Infinity);
 
 function isCSSStyleSheet(
 	sheet: unknown
 ): sheet is CSSStyleSheet {
-	return sheet instanceof CSSStyleSheet
+	return sheet instanceof CSSStyleSheet;
 }
 
 // Takes a non-global, non-sticky RegExp object with exactly one capturing
@@ -52,33 +52,33 @@ const replaceAllAsync = (
 		throw new TypeError(
 			'Only non-global and non-sticky ' +
 				"(without the /g or /y flags) regex' can be used"
-		)
+		);
 	}
 
-	const result = regex.exec(input)
+	const result = regex.exec(input);
 
 	if (result === null) {
-		return resolve(emptyErrorStack(input))
+		return resolve(emptyErrorStack(input));
 	}
 
-	const theWholeMatch = result[0]
-	const firstGroup = result[1]
+	const theWholeMatch = result[0];
+	const firstGroup = result[1];
 
 	if (typeof result[1] !== 'string') {
-		return resolve(emptyErrorStack(input))
+		return resolve(emptyErrorStack(input));
 	}
 
-	const start = input.substring(0, result.index)
+	const start = input.substring(0, result.index);
 	const middleF = pipe(
 		replaceFn(firstGroup),
 		coalesce<DetailedError, ErrorStack<string>>(
 			errorStackFromError(firstGroup)
 		)(emptyErrorStack)
-	)
+	);
 	const endF = replaceAllAsync(
 		regex,
 		replaceFn
-	)(input.substring(result.index + theWholeMatch.length))
+	)(input.substring(result.index + theWholeMatch.length));
 
 	return pipe(
 		flutureBoth(middleF)(endF),
@@ -87,44 +87,44 @@ const replaceAllAsync = (
 				start + middle.value + end.value
 			)(flatten([middle.errors, end.errors]))
 		)
-	)
-}
+	);
+};
 
 const processStyleSheetText = (baseURL: string) => (
 	styleSheetText: string
 ): Fluture<DetailedError, ErrorStack<string>> => {
-	const $stylesheetStyle = document.createElement('style')
+	const $stylesheetStyle = document.createElement('style');
 
 	$stylesheetStyle.appendChild(
 		document.createTextNode(styleSheetText)
-	)
+	);
 
-	const $fakeDocument = document.implementation.createHTMLDocument()
-	$fakeDocument.head.appendChild($stylesheetStyle)
+	const $fakeDocument = document.implementation.createHTMLDocument();
+	$fakeDocument.head.appendChild($stylesheetStyle);
 
-	const {sheet} = $stylesheetStyle
+	const { sheet } = $stylesheetStyle;
 
 	if (!(sheet instanceof CSSStyleSheet)) {
-		const reason = 'Failed to initialize CSSStyleSheet'
+		const reason = 'Failed to initialize CSSStyleSheet';
 
 		return reject({
 			reason,
 			error: new Error(reason)
-		})
+		});
 	}
 
-	return inlineURLsFromCSSRuleList(sheet.cssRules, baseURL)
-}
+	return inlineURLsFromCSSRuleList(sheet.cssRules, baseURL);
+};
 
-const URL_REGEX = /url\(['"]?(.+?)['"]?\)/
+const URL_REGEX = /url\(['"]?(.+?)['"]?\)/;
 const inlineStyleSheetTextURLs = (baseURL: string) =>
 	replaceAllAsync(URL_REGEX, url => {
 		if (url.indexOf('data:') === 0) {
 			// Skip data urls
-			return resolve(`url("${url}")`)
+			return resolve(`url("${url}")`);
 		}
 
-		const absoluteURL = new URL(url, baseURL).toString()
+		const absoluteURL = new URL(url, baseURL).toString();
 
 		return pipe(
 			download(absoluteURL),
@@ -132,8 +132,8 @@ const inlineStyleSheetTextURLs = (baseURL: string) =>
 			chainFluture(responseToBlob),
 			chainFluture(blobToDataURL),
 			mapFluture(dataURL => `url(${dataURL})`)
-		)
-	})
+		);
+	});
 
 const inlineURLsFromCSSRule = (baseURL: string) => (
 	rule: CSSRule
@@ -172,30 +172,30 @@ const inlineURLsFromCSSRule = (baseURL: string) => (
 			'borderImageSource',
 			'mask',
 			'maskImage'
-		] as const
+		] as const;
 
 		return pipe(
 			rulesThatNeedTheirURLCallsInlined.map(ruleName => {
 				const ruleStyle = rule.style[ruleName] as
 					| string
-					| undefined
+					| undefined;
 
 				if (
 					ruleStyle === '' ||
 					ruleStyle === undefined
 				) {
-					return resolve([])
+					return resolve([]);
 				}
 
 				return pipe(
 					inlineStyleSheetTextURLs(baseURL)(ruleStyle),
-					mapFluture(({errors, value}) => {
+					mapFluture(({ errors, value }) => {
 						// fp gods please spare me again
-						rule.style[ruleName] = value
+						rule.style[ruleName] = value;
 
-						return errors
+						return errors;
 					})
-				)
+				);
 			}),
 			parallelAll,
 			mapFluture(flatten),
@@ -203,19 +203,19 @@ const inlineURLsFromCSSRule = (baseURL: string) => (
 				// Needs to be a thunk to let the rule.cssText update
 				errorStackFromErrors(rule.cssText)(e)
 			)
-		)
+		);
 	} else if (rule instanceof CSSFontFaceRule) {
 		// Setting `src` in a @font-face declaration is not supported in
 		// Firefox, we unfortunately have to replace things manually
-		return inlineStyleSheetTextURLs(baseURL)(rule.cssText)
+		return inlineStyleSheetTextURLs(baseURL)(rule.cssText);
 	} else if (rule instanceof CSSMediaRule) {
 		if (window.matchMedia(rule.media.mediaText).matches) {
 			return inlineURLsFromCSSRuleList(
 				rule.cssRules,
 				baseURL
-			)
+			);
 		} else {
-			return resolve(emptyErrorStack(''))
+			return resolve(emptyErrorStack(''));
 		}
 	} else if (rule instanceof CSSImportRule) {
 		// Download the referenced stylesheet recursively
@@ -224,14 +224,14 @@ const inlineURLsFromCSSRule = (baseURL: string) => (
 			mapRej(downloadErrorToDetailedError),
 			chainFluture(responseToText),
 			chainFluture(processStyleSheetText(rule.href))
-		)
+		);
 	} else if (rule instanceof CSSPageRule) {
 		// Library is not used in print contexts - safe to ignore.
-		return resolve(emptyErrorStack(rule.cssText))
+		return resolve(emptyErrorStack(rule.cssText));
 	}
 
-	return resolve(emptyErrorStack(rule.cssText))
-}
+	return resolve(emptyErrorStack(rule.cssText));
+};
 
 const inlineURLsFromCSSRuleList = (
 	cssRules: CSSRuleList,
@@ -247,7 +247,7 @@ const inlineURLsFromCSSRuleList = (
 		),
 		parallelAll,
 		mapFluture(foldErrorStacks((a, b) => `${a}\n${b}`, ''))
-	)
+	);
 
 // Cross-origin stylesheets cannot be read from directly, download any
 // stylesheet that's not inline.
@@ -269,7 +269,7 @@ const extractStylesFromCSSStyleSheet = (baseURL: string) => (
 		chainFluture(
 			processStyleSheetText(styleSheet.href || baseURL)
 		)
-	)
+	);
 
 const extractStylesFromStyleSheets = (
 	styleSheets: StyleSheetList,
@@ -281,7 +281,7 @@ const extractStylesFromStyleSheets = (
 		map(extractStylesFromCSSStyleSheet(baseURL)),
 		map(coalesce(errorStackFromError(''))(identity)),
 		parallelAll
-	)
+	);
 
 const inlineExternalStylesheets = (
 	container: Container
@@ -298,26 +298,26 @@ const inlineExternalStylesheets = (
 			)) {
 				const $style = container.parentWindow.document.createElement(
 					'style'
-				)
+				);
 
 				$style.appendChild(
 					container.parentWindow.document.createTextNode(
 						styleContents
 					)
-				)
+				);
 
-				container.tree.head.appendChild($style)
+				container.tree.head.appendChild($style);
 			}
 
 			const errors = pipe(
 				stacks,
 				map(errorStackErrors),
 				flatten
-			)
+			);
 
-			return errorStackFromErrors(container)(errors)
+			return errorStackFromErrors(container)(errors);
 		})
-	)
+	);
 
 // Inline all images on the page (improvement: can only
 // inline *visible* images for potentially less network
@@ -335,8 +335,8 @@ const inlineImages = (
 				chainFluture(blobToDataURL),
 				mapFluture(dataURL => {
 					// please don't hurt me fp gods
-					$image.src = dataURL
-					return dataURL
+					$image.src = dataURL;
+					return dataURL;
 				}),
 				coalesce<
 					DetailedError,
@@ -346,7 +346,7 @@ const inlineImages = (
 		),
 		parallelAll,
 		mapFluture(errorStackFromEithers(container))
-	)
+	);
 
 export const inlineExternalResources = (
 	container: Container
@@ -371,4 +371,4 @@ export const inlineExternalResources = (
 				)
 			)
 		)
-	)
+	);

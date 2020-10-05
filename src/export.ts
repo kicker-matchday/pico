@@ -1,19 +1,19 @@
-import {Future, chain as chainFluture, reject} from 'fluture'
-import {fromEither as flutureFromEither} from 'fp-ts-fluture/es6/Future'
-import {Either, left, right} from 'fp-ts/es6/Either'
-import {flow} from 'fp-ts/es6/function'
-import {pipe} from 'fp-ts/es6/pipeable'
+import { Future, chain as chainFluture, reject } from 'fluture';
+import { fromEither as flutureFromEither } from 'fp-ts-fluture/es6/Future';
+import { Either, left, right } from 'fp-ts/es6/Either';
+import { flow } from 'fp-ts/es6/function';
+import { pipe } from 'fp-ts/es6/pipeable';
 
-import {Container} from './container'
-import {createElement} from './element'
-import {DetailedError, err} from './error'
-import {noop} from './noop'
+import { Container } from './container';
+import { createElement } from './element';
+import { DetailedError, err } from './error';
+import { noop } from './noop';
 
 const serializeSVGToDataURL = ($svg: SVGSVGElement): string =>
 	'data:image/svg+xml;charset=utf-8,' +
 	window.encodeURIComponent(
 		new XMLSerializer().serializeToString($svg)
-	)
+	);
 
 const canvasToPngBlob = (
 	$canvas: HTMLCanvasElement
@@ -28,45 +28,45 @@ const canvasToPngBlob = (
 								'Failed to get blob from canvas ' +
 									'(the returned blob is null)'
 							)
-						)
+						);
 					}
-					res(maybeBlob)
+					res(maybeBlob);
 				},
 				'image/png',
 				1
-			)
+			);
 		} catch {
 			rej(
 				err(
 					'Failed to get blob from canvas ' +
 						'(the canvas is most likely tainted)'
 				)
-			)
+			);
 		}
 
-		return noop
-	})
+		return noop;
+	});
 
 const canvasToPngDataURL = (
 	$canvas: HTMLCanvasElement
 ): Either<DetailedError, string> => {
 	try {
-		return right($canvas.toDataURL('image/png', 1))
+		return right($canvas.toDataURL('image/png', 1));
 	} catch {
 		return left(
 			err(
 				'Failed to get data url from canvas ' +
 					'(the canvas is most likely tainted)'
 			)
-		)
+		);
 	}
-}
+};
 
 export const containerToCanvas = (
 	container: Container
 ): Fluture<DetailedError, HTMLCanvasElement> => {
 	const scalingRatio =
-		container.parentWindow.window.devicePixelRatio || 1
+		container.parentWindow.window.devicePixelRatio || 1;
 
 	const $canvas = createElement(
 		container.parentWindow.document
@@ -77,24 +77,24 @@ export const containerToCanvas = (
 		height:
 			container.parentWindow.window.innerHeight *
 			scalingRatio
-	})
+	});
 
-	const ctx = $canvas.getContext('2d')
+	const ctx = $canvas.getContext('2d');
 
 	if (ctx === null) {
-		return reject(err('Failed to obtain 2d canvas context'))
+		return reject(err('Failed to obtain 2d canvas context'));
 	}
 
 	return timeout(2000)(
 		Future((rej, res) => {
-			const $img = new Image()
+			const $img = new Image();
 
 			$img.onerror = () =>
 				rej(
 					err(
 						`Failed to load exported <img> onto canvas`
 					)
-				)
+				);
 
 			$img.onload = () => {
 				ctx.setTransform(
@@ -104,19 +104,19 @@ export const containerToCanvas = (
 					scalingRatio,
 					0,
 					0
-				)
+				);
 
-				ctx.drawImage($img, 0, 0)
+				ctx.drawImage($img, 0, 0);
 
-				res($canvas)
-			}
+				res($canvas);
+			};
 
-			$img.src = serializeSVGToDataURL(container.tree.svg)
+			$img.src = serializeSVGToDataURL(container.tree.svg);
 
-			return $img.remove
+			return $img.remove;
 		})
-	)
-}
+	);
+};
 
 export const containerToPngBlob = (
 	container: Container
@@ -124,7 +124,7 @@ export const containerToPngBlob = (
 	pipe(
 		containerToCanvas(container),
 		chainFluture(canvasToPngBlob)
-	)
+	);
 
 export const containerToPngDataURL = (
 	container: Container
@@ -132,7 +132,7 @@ export const containerToPngDataURL = (
 	pipe(
 		containerToCanvas(container),
 		chainFluture(flow(canvasToPngDataURL, flutureFromEither))
-	)
+	);
 
 // Type safe wrapper for URL.createObjectURL. Also because this
 // function creates a reference in a global object URL store,
@@ -141,8 +141,8 @@ export const createObjectURL = (
 	object: File | Blob | MediaSource
 ): Either<DetailedError, string> => {
 	try {
-		return right(URL.createObjectURL(object))
+		return right(URL.createObjectURL(object));
 	} catch {
-		return left(err('Failed to create result object URL'))
+		return left(err('Failed to create result object URL'));
 	}
-}
+};
