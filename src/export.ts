@@ -2,11 +2,15 @@ import { Tree } from './container';
 import { createElement } from './element';
 import { getElementSize } from './utils';
 
-const serializeSVGToDataURL = ($svg: SVGSVGElement): string =>
-	'data:image/svg+xml;charset=utf-8,' +
-	window.encodeURIComponent(
+export function serializeSVGToDataURL(
+	$svg: SVGSVGElement
+): string {
+	let serialized = window.encodeURIComponent(
 		new XMLSerializer().serializeToString($svg)
 	);
+
+	return `data:image/svg+xml;charset=utf-8,${serialized}`;
+}
 
 export function canvasToPngDataURL(
 	$canvas: HTMLCanvasElement
