@@ -1,13 +1,5 @@
-import { Future, chain as chainFluture, reject } from 'fluture';
-import { fromEither as flutureFromEither } from 'fp-ts-fluture/es6/Future';
-import { Either, left, right } from 'fp-ts/es6/Either';
-import { flow } from 'fp-ts/es6/function';
-import { pipe } from 'fp-ts/es6/pipeable';
-
-import { Container } from './container';
+import { Tree } from './container';
 import { createElement } from './element';
-import { DetailedError, err } from './error';
-import { noop } from './noop';
 
 const serializeSVGToDataURL = ($svg: SVGSVGElement): string =>
 	'data:image/svg+xml;charset=utf-8,' +
@@ -15,134 +7,55 @@ const serializeSVGToDataURL = ($svg: SVGSVGElement): string =>
 		new XMLSerializer().serializeToString($svg)
 	);
 
-const canvasToPngBlob = (
+export function canvasToPngDataURL(
 	$canvas: HTMLCanvasElement
-): Fluture<DetailedError, Blob> =>
-	Future((rej, res) => {
-		try {
-			$canvas.toBlob(
-				maybeBlob => {
-					if (maybeBlob === null) {
-						return rej(
-							err(
-								'Failed to get blob from canvas ' +
-									'(the returned blob is null)'
-							)
-						);
-					}
-					res(maybeBlob);
-				},
-				'image/png',
-				1
-			);
-		} catch {
-			rej(
-				err(
-					'Failed to get blob from canvas ' +
-						'(the canvas is most likely tainted)'
-				)
-			);
-		}
+): string {
+	return $canvas.toDataURL('image/png', 1);
+}
 
-		return noop;
-	});
+export function createCanvas(
+	element: HTMLElement,
+	tree: Tree
+): Promise<HTMLCanvasElement> {
+	const dimensions = element.getBoundingClientRect();
 
-const canvasToPngDataURL = (
-	$canvas: HTMLCanvasElement
-): Either<DetailedError, string> => {
-	try {
-		return right($canvas.toDataURL('image/png', 1));
-	} catch {
-		return left(
-			err(
-				'Failed to get data url from canvas ' +
-					'(the canvas is most likely tainted)'
-			)
-		);
-	}
-};
-
-export const containerToCanvas = (
-	container: Container
-): Fluture<DetailedError, HTMLCanvasElement> => {
-	const scalingRatio =
-		container.parentWindow.window.devicePixelRatio || 1;
-
-	const $canvas = createElement(
-		container.parentWindow.document
-	)('canvas', {
-		width:
-			container.parentWindow.window.innerWidth *
-			scalingRatio,
-		height:
-			container.parentWindow.window.innerHeight *
-			scalingRatio
+	const $canvas = createElement(window.document)('canvas', {
+		width: dimensions.width,
+		height: dimensions.height
 	});
 
 	const ctx = $canvas.getContext('2d');
 
 	if (ctx === null) {
-		return reject(err('Failed to obtain 2d canvas context'));
+		throw new Error('Failed to obtain 2d canvas context');
 	}
 
-	return timeout(2000)(
-		Future((rej, res) => {
-			const $img = new Image();
+	return new Promise((resolve, reject) => {
+		const $img = new Image();
 
-			$img.onerror = () =>
-				rej(
-					err(
-						`Failed to load exported <img> onto canvas`
-					)
-				);
+		$img.onerror = () => {
+			reject(
+				new Error(
+					'Failed to load exported <img> onto canvas'
+				)
+			);
+		};
 
-			$img.onload = () => {
-				ctx.setTransform(
-					scalingRatio,
-					0,
-					0,
-					scalingRatio,
-					0,
-					0
-				);
+		$img.onload = () => {
+			/*ctx.setTransform(
+				scalingRatio,
+				0,
+				0,
+				scalingRatio,
+				0,
+				0
+			);*/
 
-				ctx.drawImage($img, 0, 0);
+			ctx.drawImage($img, 0, 0);
 
-				res($canvas);
-			};
+			resolve($canvas);
+		};
 
-			$img.src = serializeSVGToDataURL(container.tree.svg);
-
-			return $img.remove;
-		})
-	);
-};
-
-export const containerToPngBlob = (
-	container: Container
-): Fluture<DetailedError, Blob> =>
-	pipe(
-		containerToCanvas(container),
-		chainFluture(canvasToPngBlob)
-	);
-
-export const containerToPngDataURL = (
-	container: Container
-): Fluture<DetailedError, string> =>
-	pipe(
-		containerToCanvas(container),
-		chainFluture(flow(canvasToPngDataURL, flutureFromEither))
-	);
-
-// Type safe wrapper for URL.createObjectURL. Also because this
-// function creates a reference in a global object URL store,
-// this function is technically impure.
-export const createObjectURL = (
-	object: File | Blob | MediaSource
-): Either<DetailedError, string> => {
-	try {
-		return right(URL.createObjectURL(object));
-	} catch {
-		return left(err('Failed to create result object URL'));
-	}
-};
+		$img.src = serializeSVGToDataURL(tree.svg);
+	});
+}
