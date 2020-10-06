@@ -11,11 +11,8 @@ export type Tree = {
 	svg: SVGSVGElement;
 };
 
-const getBackgroundColor = (
-	$window: Window,
-	$element: HTMLElement
-): string => {
-	const { backgroundColor } = $window.getComputedStyle(
+const getBackgroundColor = ($element: HTMLElement): string => {
+	const { backgroundColor } = window.getComputedStyle(
 		$element
 	);
 
@@ -40,10 +37,7 @@ export const createTree = (source: HTMLElement): Tree => {
 		height: size.height + 'px'
 	});
 
-	$svg.style.backgroundColor = getBackgroundColor(
-		window.window,
-		source
-	);
+	$svg.style.backgroundColor = getBackgroundColor(source);
 
 	const $foreignObject = s('foreignObject', {
 		x: '0',
@@ -57,9 +51,7 @@ export const createTree = (source: HTMLElement): Tree => {
 
 	const $newHead = h('head');
 	$newHtml.appendChild($newHead);
-
-	$newHtml.appendChild($newHead);
-
+	
 	$foreignObject.appendChild($newHtml);
 	$svg.appendChild($foreignObject);
 	$iframe.appendChild($svg);

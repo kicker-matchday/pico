@@ -22,10 +22,11 @@ export function createCanvas(
 	element: HTMLElement,
 	tree: Tree
 ): Promise<HTMLCanvasElement> {
+	const scalingRatio = window.devicePixelRatio || 1;
 	const dimensions = getElementSize(element);
 	const $canvas = createElement(window.document)('canvas', {
-		width: dimensions.width,
-		height: dimensions.height
+		width: dimensions.width * scalingRatio,
+		height: dimensions.height * scalingRatio
 	});
 
 	const ctx = $canvas.getContext('2d');
@@ -46,14 +47,14 @@ export function createCanvas(
 		};
 
 		$img.onload = () => {
-			/*ctx.setTransform(
+			ctx.setTransform(
 				scalingRatio,
 				0,
 				0,
 				scalingRatio,
 				0,
 				0
-			);*/
+			);
 
 			ctx.drawImage($img, 0, 0);
 

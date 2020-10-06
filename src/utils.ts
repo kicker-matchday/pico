@@ -1,3 +1,5 @@
+import getSize from 'get-size';
+
 export const noop = () => {};
 
 export const blobToDataURL = (blob: Blob): Promise<string> => {
@@ -36,9 +38,11 @@ export function createObjectURL(
 }
 
 export function getElementSize(element: HTMLElement) {
+	const dimensions = getSize(element);
+
 	return {
-		width: element.scrollWidth,
-		height: element.scrollHeight
+		width: dimensions.outerWidth,
+		height: dimensions.outerHeight
 	};
 }
 
