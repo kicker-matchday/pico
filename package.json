@@ -24,10 +24,13 @@
 	"devDependencies": {
 		"@types/node": "^13.9.1",
 		"import-sort-style-module": "^6.0.0",
+		"parcel": "^1.12.4",
 		"parcel-bundler": "^1.12.4",
 		"prettier": "^1.19.1",
 		"prettier-plugin-import-sort": "0.0.3",
-		"typescript": "^3.8.3",
-		"parcel": "^1.12.4"
+		"typescript": "^3.8.3"
+	},
+	"dependencies": {
+		"get-size": "^2.0.3"
 	}
 }

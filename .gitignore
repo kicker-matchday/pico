@@ -3,3 +3,4 @@ dist
 lib
 .cache
 package-lock.json
+*.log

@@ -3,6 +3,7 @@ import {
 	createSVGElement,
 	xhtmlNS
 } from './element';
+import { getElementSize } from './utils';
 
 export type Tree = {
 	html: HTMLHtmlElement;
@@ -10,11 +11,8 @@ export type Tree = {
 	svg: SVGSVGElement;
 };
 
-const getBackgroundColor = (
-	$window: Window,
-	$element: HTMLElement
-): string => {
-	const { backgroundColor } = $window.getComputedStyle(
+const getBackgroundColor = ($element: HTMLElement): string => {
+	const { backgroundColor } = window.getComputedStyle(
 		$element
 	);
 
@@ -25,31 +23,27 @@ const getBackgroundColor = (
 };
 
 export const createTree = (source: HTMLElement): Tree => {
-	const { innerWidth: width, innerHeight: height } = window;
-
+	const size = getElementSize(source);
 	const h = createElement(window.document);
 	const s = createSVGElement(window.document);
 
 	const $iframe = h('iframe', {
-		width: width + 'px',
-		height: height + 'px'
+		width: size.width + 'px',
+		height: size.height + 'px'
 	});
 
 	const $svg = s('svg', {
-		width: width + 'px',
-		height: height + 'px'
+		width: size.width + 'px',
+		height: size.height + 'px'
 	});
 
-	$svg.style.backgroundColor = getBackgroundColor(
-		window.window,
-		source
-	);
+	$svg.style.backgroundColor = getBackgroundColor(source);
 
 	const $foreignObject = s('foreignObject', {
 		x: '0',
 		y: '0',
-		width: width + 'px',
-		height: height + 'px'
+		width: size.width + 'px',
+		height: size.height + 'px'
 	});
 
 	const $newHtml = h('html');
@@ -57,9 +51,7 @@ export const createTree = (source: HTMLElement): Tree => {
 
 	const $newHead = h('head');
 	$newHtml.appendChild($newHead);
-
-	$newHtml.appendChild($newHead);
-
+	
 	$foreignObject.appendChild($newHtml);
 	$svg.appendChild($foreignObject);
 	$iframe.appendChild($svg);
