@@ -1,5 +1,6 @@
 import { Tree } from './container';
 import { createElement } from './element';
+import { getElementSize } from './utils';
 
 const serializeSVGToDataURL = ($svg: SVGSVGElement): string =>
 	'data:image/svg+xml;charset=utf-8,' +
@@ -17,8 +18,7 @@ export function createCanvas(
 	element: HTMLElement,
 	tree: Tree
 ): Promise<HTMLCanvasElement> {
-	const dimensions = element.getBoundingClientRect();
-
+	const dimensions = getElementSize(element);
 	const $canvas = createElement(window.document)('canvas', {
 		width: dimensions.width,
 		height: dimensions.height

@@ -1,3 +1,5 @@
+import getSize from 'get-size';
+
 export const noop = () => {};
 
 export const blobToDataURL = (blob: Blob): Promise<string> => {
@@ -33,4 +35,41 @@ export function createObjectURL(
 	object: File | Blob | MediaSource
 ): string {
 	return URL.createObjectURL(object);
+}
+
+export function getElementSize(element: HTMLElement) {
+	let size = getSize(element);
+
+	return {
+		width: size.outerWidth,
+		height: size.outerHeight
+	};
+}
+
+export async function download(url: string): Promise<Response> {
+	let response = await fetch(url, { cache: 'force-cache' });
+
+	if (!response.ok) {
+		throw {
+			_tag: 'HTTPError',
+			url,
+			status: response.status,
+			statusText: response.statusText
+		};
+	}
+
+	return response;
+}
+
+export async function responseToText(
+	response: Response
+): Promise<string> {
+	return response.text();
+}
+
+export async function responseToBlob(
+	response: Response
+): Promise<Blob> {
+	let blob = await response.blob();
+	return blob;
 }

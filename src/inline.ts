@@ -1,42 +1,4 @@
-/*import {
-	chain as chainFluture,
-	coalesce,
-	both as flutureBoth,
-	map as mapFluture,
-	mapRej,
-	parallel,
-	reject,
-	resolve
-} from 'fluture';
-import { filter, flatten, map } from 'fp-ts/es6/Array';
-import { Either, left, right } from 'fp-ts/es6/Either';
-import { identity } from 'fp-ts/es6/function';
-import { pipe } from 'fp-ts/es6/pipeable';
-
-import { Container } from './container';
-import { DetailedError } from './error';
-import {
-	ErrorStack,
-	empty as emptyErrorStack,
-	errors as errorStackErrors,
-	fromEithers as errorStackFromEithers,
-	fromError as errorStackFromError,
-	fromErrors as errorStackFromErrors,
-	value as errorStackValue,
-	fold as foldErrorStacks
-} from './error-stack';
-import { Fluture } from './future';
-import {
-	blobToDataURL,
-	download,
-	downloadErrorToDetailedError,
-	responseToBlob,
-	responseToText
-} from './utils';
-
-const parallelAll = parallel(Infinity);
-
-function isCSSStyleSheet(
+/*function isCSSStyleSheet(
 	sheet: unknown
 ): sheet is CSSStyleSheet {
 	return sheet instanceof CSSStyleSheet;
@@ -317,58 +279,30 @@ const inlineExternalStylesheets = (
 
 			return errorStackFromErrors(container)(errors);
 		})
-	);
+	);*/
+
+import { Tree } from './container';
+import {
+	blobToDataURL,
+	download,
+	responseToBlob
+} from './utils';
 
 // Inline all images on the page (improvement: can only
 // inline *visible* images for potentially less network
 // strain if cache doesn't work)
-const inlineImages = (
-	container: Container
-): Fluture<never, ErrorStack<Container>> =>
-	pipe(
-		Array.from(container.tree.html.querySelectorAll('img')),
-		map($image =>
-			pipe(
-				download($image.src),
-				mapRej(downloadErrorToDetailedError),
-				chainFluture(responseToBlob),
-				chainFluture(blobToDataURL),
-				mapFluture(dataURL => {
-					// please don't hurt me fp gods
-					$image.src = dataURL;
-					return dataURL;
-				}),
-				coalesce<
-					DetailedError,
-					Either<DetailedError, string>
-				>(left)(right)
-			)
-		),
-		parallelAll,
-		mapFluture(errorStackFromEithers(container))
+export async function inlineImages(tree: Tree) {
+	let images = Array.from(tree.html.querySelectorAll('img'));
+	await Promise.all(
+		images.map(async image => {
+			try {
+				let response = await download(image.src);
+				let blob = await responseToBlob(response);
+				let dataUrl = await blobToDataURL(blob);
+				image.src = dataUrl;
+			} catch (err) {
+				console.error(err);
+			}
+		})
 	);
-
-export const inlineExternalResources = (
-	container: Container
-): Fluture<never, ErrorStack<Container>> =>
-	pipe(
-		inlineImages(container),
-		chainFluture(stack =>
-			// Improvement: `errorStack.chain`
-			pipe(
-				inlineExternalStylesheets(
-					errorStackValue(stack)
-				),
-				mapFluture(secondStack =>
-					errorStackFromErrors(
-						errorStackValue(secondStack)
-					)(
-						flatten([
-							errorStackErrors(stack),
-							errorStackErrors(secondStack)
-						])
-					)
-				)
-			)
-		)
-	);*/
+}

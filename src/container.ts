@@ -3,6 +3,7 @@ import {
 	createSVGElement,
 	xhtmlNS
 } from './element';
+import { getElementSize } from './utils';
 
 export type Tree = {
 	html: HTMLHtmlElement;
@@ -25,19 +26,18 @@ const getBackgroundColor = (
 };
 
 export const createTree = (source: HTMLElement): Tree => {
-	const { innerWidth: width, innerHeight: height } = window;
-
+	const size = getElementSize(source);
 	const h = createElement(window.document);
 	const s = createSVGElement(window.document);
 
 	const $iframe = h('iframe', {
-		width: width + 'px',
-		height: height + 'px'
+		width: size.width + 'px',
+		height: size.height + 'px'
 	});
 
 	const $svg = s('svg', {
-		width: width + 'px',
-		height: height + 'px'
+		width: size.width + 'px',
+		height: size.height + 'px'
 	});
 
 	$svg.style.backgroundColor = getBackgroundColor(
@@ -48,8 +48,8 @@ export const createTree = (source: HTMLElement): Tree => {
 	const $foreignObject = s('foreignObject', {
 		x: '0',
 		y: '0',
-		width: width + 'px',
-		height: height + 'px'
+		width: size.width + 'px',
+		height: size.height + 'px'
 	});
 
 	const $newHtml = h('html');
