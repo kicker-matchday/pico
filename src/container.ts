@@ -3,15 +3,11 @@ import {
 	createSVGElement,
 	xhtmlNS
 } from './element';
-import { WindowInfo, getWindowInfo } from './window-info';
 
-export type Container = {
-	parentWindow: WindowInfo;
-	tree: {
-		html: HTMLHtmlElement;
-		head: HTMLHeadElement;
-		svg: SVGSVGElement;
-	};
+export type Tree = {
+	html: HTMLHtmlElement;
+	head: HTMLHeadElement;
+	svg: SVGSVGElement;
 };
 
 const getBackgroundColor = (
@@ -21,20 +17,18 @@ const getBackgroundColor = (
 	const { backgroundColor } = $window.getComputedStyle(
 		$element
 	);
+
 	return backgroundColor === 'transparent' ||
 		backgroundColor === 'rgba(0, 0, 0, 0)'
 		? 'white'
 		: backgroundColor;
 };
 
-export const createTree = (windowInfo: WindowInfo) => {
-	const {
-		innerWidth: width,
-		innerHeight: height
-	} = windowInfo.window;
+export const createTree = (source: HTMLElement): Tree => {
+	const { innerWidth: width, innerHeight: height } = window;
 
-	const h = createElement(windowInfo.document);
-	const s = createSVGElement(windowInfo.document);
+	const h = createElement(window.document);
+	const s = createSVGElement(window.document);
 
 	const $iframe = h('iframe', {
 		width: width + 'px',
@@ -47,8 +41,8 @@ export const createTree = (windowInfo: WindowInfo) => {
 	});
 
 	$svg.style.backgroundColor = getBackgroundColor(
-		windowInfo.window,
-		windowInfo.body
+		window.window,
+		source
 	);
 
 	const $foreignObject = s('foreignObject', {
@@ -74,14 +68,5 @@ export const createTree = (windowInfo: WindowInfo) => {
 		html: $newHtml,
 		head: $newHead,
 		svg: $svg
-	};
-};
-
-export const createContainer = ($window: Window): Container => {
-	let parentWindow = getWindowInfo($window);
-
-	return {
-		parentWindow,
-		tree: createTree(parentWindow)
 	};
 };

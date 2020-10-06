@@ -1,38 +1,19 @@
-import {cloneBody} from './clone'
-import {Container, createContainer} from './container'
-import 
-	containerToPngDataURL,
-} from './export'
-import {Fluture} from './future'
-import {inlineExternalResources} from './inline'
-import {
-	Options,
-	defaults as defaultOptions_
-} from './options'
+import { cloneBody } from './clone';
+import { createTree } from './container';
+import { canvasToPngDataURL, createCanvas } from './export';
 
-export const defaultOptions = defaultOptions_
+export interface CaptureOptions {
+	element: HTMLElement;
+}
 
-const generateExport = (
-	$window: Window,
-	options: Options
-): Fluture<DetailedError, ErrorStack<Container>> =>
-	pipe(
-		// Create container where we'll store extracted
-		// information about the window (which could fail) in
-		createContainer($window),
+export default async function captureScreenshot(
+	opts: CaptureOptions
+): Promise<string> {
+	let sourceElement = opts.element;
 
-		flutureFromEither,
+	let tree = createTree(sourceElement);
+	cloneBody(sourceElement, tree);
 
-		// Clone existing window data into a container,
-		// including filling out <input>'s, copying <canvas>
-		// elements, etc.  mapEither(cloneBody),
-		mapFluture(cloneBody(options.ignore)),
-
-		// Inline external stylesheets, images, fonts as data
-		// URL's inside of the copied tree
-		chainFluture(inlineExternalResources)
-	)
-
-export const dataUrl = (container) => {
-	return containerToPngDataURL(container)
+	let canvas = await createCanvas(sourceElement, tree);
+	return canvasToPngDataURL(canvas);
 }

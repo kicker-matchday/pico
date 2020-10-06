@@ -25,3 +25,12 @@ export const blobToDataURL = (blob: Blob): Promise<string> => {
 		reader.readAsDataURL(blob);
 	});
 };
+
+// Type safe wrapper for URL.createObjectURL. Also because this
+// function creates a reference in a global object URL store,
+// this function is technically impure.
+export function createObjectURL(
+	object: File | Blob | MediaSource
+): string {
+	return URL.createObjectURL(object);
+}

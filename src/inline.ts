@@ -1,4 +1,4 @@
-import {
+/*import {
 	chain as chainFluture,
 	coalesce,
 	both as flutureBoth,
@@ -371,4 +371,4 @@ export const inlineExternalResources = (
 				)
 			)
 		)
-	);
+	);*/

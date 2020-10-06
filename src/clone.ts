@@ -1,18 +1,12 @@
-// Mark <canvas>, <input> and <textarea> elements with
-// unique id's so that their state can be later copied into
-// a clone
-
-import { zip } from 'fp-ts/es6/Array';
-
-import { Container } from './container';
+import { Tree, createTree } from './container';
 
 const PICO_CLONE_ID_KEY = 'picocloneid';
 
-const id = () => {
+function generateId() {
 	return Math.random()
 		.toString(32)
 		.substring(2);
-};
+}
 
 function isHTMLElement(
 	element: Element
@@ -52,7 +46,7 @@ const attachCloneID = ($target: HTMLElement) => {
 		...$target.querySelectorAll('canvas'),
 		...getScrolledElements($target)
 	]) {
-		$element.dataset[PICO_CLONE_ID_KEY] = id();
+		$element.dataset[PICO_CLONE_ID_KEY] = generateId();
 	}
 };
 
@@ -73,7 +67,7 @@ const removeCloneID = ($target: HTMLElement) => {
 	}
 };
 
-const cloneCanvases = (container: Container) => {
+/*const cloneCanvases = (container: Container) => {
 	for (const $clonedCanvas of container.tree.html.querySelectorAll(
 		'canvas'
 	)) {
@@ -387,55 +381,33 @@ const cloneScrolls = (container: Container) => {
 	container.tree.html.style.transform += ` translate(-${container.parentWindow.html.scrollLeft}px, -${container.parentWindow.html.scrollTop}px)`;
 
 	return container;
-};
+};*/
 
-const removeNodesMatchingSelectors = (selectors: string[]) => (
-	$node: Node
-) => {
-	if ($node instanceof Element) {
-		selectors.forEach(selector => {
-			for (const $child of $node.querySelectorAll(
-				selector
-			)) {
-				$child.remove();
-			}
-		});
-	}
-};
+export const cloneBody = (source: HTMLElement, tree: Tree): Tree => {
+	attachCloneID(tree.html);
 
-// (ugly)
-export const cloneBody = (ignoredSelectors: string[]) => (
-	container: Container
-): Container => {
-	attachCloneID(container.parentWindow.html);
-
-	container.tree.html.className =
-		container.parentWindow.html.className;
-
-	container.tree.html.style.cssText =
-		container.parentWindow.html.style.cssText;
+	tree.html.className = source.className;
+	tree.html.style.cssText = source.style.cssText;
 
 	// Fix for `rem` units
-	container.tree.svg.style.fontSize = container.parentWindow.window.getComputedStyle(
-		container.parentWindow.html
+	tree.svg.style.fontSize = window.getComputedStyle(
+		source
 	).fontSize;
 
-	const $clonedBody = container.parentWindow.body.cloneNode(
+	const $clonedBody = source.cloneNode(
 		true
 	);
 
-	removeNodesMatchingSelectors(ignoredSelectors)($clonedBody);
-
-	container.tree.html.appendChild($clonedBody);
-	cloneInputs(container);
-	cloneCanvases(container);
-	cloneScrolls(container);
+	tree.html.appendChild($clonedBody);
+	// cloneInputs(container);
+	// cloneCanvases(container);
+	// cloneScrolls(container);
 
 	if ($clonedBody instanceof HTMLBodyElement) {
-		container.tree.html.style.margin = '0';
+		tree.html.style.margin = '0';
 	}
 
-	removeCloneID(container.parentWindow.html);
+	removeCloneID(tree.html);
 
-	return container;
+	return tree;
 };
