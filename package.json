@@ -6,6 +6,7 @@
 	"version": "1.0.1",
 	"main": "lib/index.js",
 	"scripts": {
+		"dev": "parcel example/index.html",
 		"build": "del lib && tsc",
 		"build:watch": "tsc -w",
 		"prepublishOnly": "npm run build",
@@ -26,6 +27,7 @@
 		"parcel-bundler": "^1.12.4",
 		"prettier": "^1.19.1",
 		"prettier-plugin-import-sort": "0.0.3",
-		"typescript": "^3.8.3"
+		"typescript": "^3.8.3",
+		"parcel": "^1.12.4"
 	}
 }
